@@ -1,6 +1,9 @@
 # Azure AI Foundry Web App
 This repository contains code designed to faciliate your experimentation and exploration with the Azure AI Foundry SDK
 
+![image](https://github.com/user-attachments/assets/6e5aa3b7-b5e8-4c47-84fc-ff8f7ba64936)
+
+
 ## Exploring the Wonderful World of AI with Azure AI Foundry
 <img width="427" alt="image" src="https://github.com/user-attachments/assets/85466c59-ab6d-4127-91ef-5cdfbac9cb42" />
 
