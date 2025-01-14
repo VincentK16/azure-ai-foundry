@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .chat-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .chat-message.user {
+            text-align: right;
+        }
+        .chat-message.ai {
+            text-align: left;
+        }
+        .form-check {
+            display: flex;
+            align-items: center;
+        }
+        .form-check-label {
+            margin-left: 10px;
+        }
+        .form-switch .form-check-input {
+            width: 2.5em;
+            height: 1.5em;
+            background-size: 1.5em 1.5em;
+        }
+        .toggle-icon {
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/cognitiveservices-speech-sdk@1.19.0/distrib/browser/azure-cognitiveservices-speech-sdk.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Chat with AI</h1>
+        <div class="chat-box">
+            {% if user_message and ai_response %}
+                <div class="chat-message user">
+                    <strong>You:</strong> {{ user_message }}
+                </div>
+                <div class="chat-message ai">
+                    <strong>AI:</strong> {{ ai_response }}
+                </div>
+            {% endif %}
+        </div>
+        <form method="POST">
+            <div class="form-group">
+                <label for="user_message">Your Message:</label>
+                <input type="text" id="user_message" name="user_message" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="selected_voice">Select Voice:</label>
+                <select id="selected_voice" name="selected_voice" class="form-control">
+                    <option value="en-US-JennyNeural" {% if selected_voice == 'en-US-JennyNeural' %}selected{% endif %}>Jenny (en-US)</option>
+                    <option value="en-US-GuyNeural" {% if selected_voice == 'en-US-GuyNeural' %}selected{% endif %}>Guy (en-US)</option>
+                    <option value="en-GB-LibbyNeural" {% if selected_voice == 'en-GB-LibbyNeural' %}selected{% endif %}>Libby (en-GB)</option>
+                    <option value="en-GB-RyanNeural" {% if selected_voice == 'en-GB-RyanNeural' %}selected{% endif %}>Ryan (en-GB)</option>
+                    <option value="zh-CN-XiaoxiaoNeural" {% if selected_voice == 'zh-CN-XiaoxiaoNeural' %}selected{% endif %}>Chinese (Female)</option>
+                    <option value="ms-MY-OsmanNeural" {% if selected_voice == 'ms-MY-OsmanNeural' %}selected{% endif %}>Malay (Osman) </option>
+                </select>
+            </div>
+            <input type="hidden" id="speech_enabled" name="speech_enabled" value="{{ 'true' if speech_enabled else 'false' }}">
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+        <div class="mt-3">
+            <i id="toggle-speech" class="fas {{ 'fa-volume-up' if speech_enabled else 'fa-volume-mute' }} toggle-icon"></i>
+        </div>
+    </div>
+    <script>
+        const toggleSpeechIcon = document.getElementById('toggle-speech');
+        const speechEnabledInput = document.getElementById('speech_enabled');
+        let synthesizer;
+
+        toggleSpeechIcon.addEventListener('click', () => {
+            const isEnabled = speechEnabledInput.value === 'true';
+            speechEnabledInput.value = !isEnabled;
+            toggleSpeechIcon.classList.toggle('fa-volume-up', !isEnabled);
+            toggleSpeechIcon.classList.toggle('fa-volume-mute', isEnabled);
+
+            if (!isEnabled && synthesizer) {
+                synthesizer.close();
+                synthesizer = null;
+            }
+        });
+
+        {% if ai_response %}
+        if (speechEnabledInput.value === 'true') {
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription("YourAzureSpeechKey", "YourServiceRegion");
+            speechConfig.speechSynthesisVoiceName = "{{ selected_voice }}";
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput();
+            synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig);
+            synthesizer.speakTextAsync("{{ ai_response }}",
+                result => {
+                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                        console.log("Speech synthesis succeeded.");
+                    } else {
+                        console.error("Speech synthesis failed:", result.errorDetails);
+                    }
+                },
+                error => {
+                    console.error("Error during speech synthesis:", error);
+                });
+        }
+        {% endif %}
+    </script>
+</body>
+</html>
